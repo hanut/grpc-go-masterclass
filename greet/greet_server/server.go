@@ -9,6 +9,11 @@ import (
 	"strconv"
 	"time"
 
+	"google.golang.org/grpc/credentials"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/hanut/grpc-go-masterclass/greet/greetpb"
 
 	"google.golang.org/grpc"
@@ -102,14 +107,38 @@ func (*server) GreetEveryone(stream greetpb.GreetService_GreetEveryoneServer) er
 	}
 }
 
+func (*server) GreetWithDeadline(ctx context.Context, req *greetpb.GreetWithDeadlineRequest) (*greetpb.GreetWithDeadlineResponse, error) {
+	fmt.Printf("GreetWithDeadline function was invoked with %v\n", req)
+	for i := 0; i < 3; i++ {
+		if ctx.Err() == context.Canceled {
+			fmt.Println("The client cancelled the request")
+			return nil, status.Error(codes.Canceled, "The client cancelled the request")
+		}
+		time.Sleep(time.Second * 1)
+	}
+	fname := req.GetGreeting().GetFirstName()
+	lname := req.GetGreeting().GetLastName()
+	res := greetpb.GreetWithDeadlineResponse{
+		Result: "Hello " + fname + " " + lname,
+	}
+	return &res, nil
+}
+
 func main() {
 
-	lis, err := net.Listen("tcp", "0.0.0.0:50051")
+	lis, err := net.Listen("tcp", "localhost:50051")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
+	certFile := "/home/hanut/go/src/github.com/hanut/grpc-go-masterclass/ssl/localhost.crt"
+	keyFile := "/home/hanut/go/src/github.com/hanut/grpc-go-masterclass/ssl/localhost.key"
+	creds, err := credentials.NewServerTLSFromFile(certFile, keyFile)
+	if err != nil {
+		log.Fatalf("Error creating credentials: %v\n", err)
+		return
+	}
+	s := grpc.NewServer(grpc.Creds(creds))
 	greetpb.RegisterGreetServiceServer(s, &server{})
 
 	fmt.Println("Server is listening on 0.0.0.0[:50051]")

@@ -39,7 +39,9 @@ func main() {
 	// doSum(&c)
 	// doDecomposePN(&c, &n)
 	// doCalculateAvg(&c, &([]uint32{245, 618, 718, 121}))
-	doFindMaximum(&c, &[]int32{-100, -20, -30, -1, -99})
+	// doFindMaximum(&c, &[]int32{-100, -20, -30, -1, -99})
+	doSqrRoot(&c, 256)
+	doSqrRoot(&c, -256)
 }
 
 func doSum(c *calculatorpb.CalculatorServiceClient) {
@@ -151,4 +153,13 @@ func doFindMaximum(c *calculatorpb.CalculatorServiceClient, nums *[]int32) {
 	}
 
 	close(receiver)
+}
+
+func doSqrRoot(c *calculatorpb.CalculatorServiceClient, num int32) {
+	res, err := (*c).SquareRoot(context.Background(), &calculatorpb.SquareRootRequest{Number: num})
+
+	if err != nil {
+		log.Fatalf("Error invoking SquareRoot: %v\n", err)
+	}
+	fmt.Printf("Square Root of (%v) is %v\n", num, res.GetRoot())
 }

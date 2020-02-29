@@ -40,6 +40,12 @@ message GreetEveryoneRequest {
 message GreetEveryoneResponse {
     string result = 1;
 }
+message GreetWithDeadlineRequest {
+    Greeting greeting = 1;
+}
+message GreetWithDeadlineResponse {
+    string result = 1;
+}
 
 service GreetService {
  
@@ -54,4 +60,7 @@ service GreetService {
 
     // Bi-di Streaming API
     rpc GreetEveryone(stream GreetEveryoneRequest) returns (stream GreetEveryoneResponse) {};
+
+    // Deadlines!!!!
+    rpc GreetWithDeadline(GreetWithDeadlineRequest) returns (GreetWithDeadlineResponse){};
 }
