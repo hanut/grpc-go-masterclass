@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net"
 
@@ -28,6 +29,27 @@ func (*server) PrimeNumberDecomposition(req *calculatorpb.PrimeNumberDecompositi
 		}
 	}
 	return nil
+}
+
+func (*server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAverageServer) error {
+	total := uint32(0)
+	count := uint32(0)
+	for {
+		m, err := stream.Recv()
+		if err == io.EOF {
+			// Stream has ended, return average
+			return stream.SendAndClose(&calculatorpb.ComputeAverageResponse{
+				Result: float64(total) / float64(count),
+			})
+		}
+		if err != nil {
+			log.Fatalf("Error reading stream: %v\n", err)
+			return err
+		}
+		n := m.GetNumber()
+		count++
+		total = total + n
+	}
 }
 
 func main() {

@@ -11,8 +11,17 @@ message PrimeNumberDecompositionResponse {
   uint32 response = 1;
 }
 
+message ComputeAverageRequest {
+  uint32 number = 1;
+}
+
+message ComputeAverageResponse {
+  double result = 1;
+}
+
 service CalculatorService {
 
   rpc PrimeNumberDecomposition(PrimeNumberDecompositionRequest) returns (stream PrimeNumberDecompositionResponse);
 
+  rpc ComputeAverage (stream ComputeAverageRequest) returns (ComputeAverageResponse);
 }

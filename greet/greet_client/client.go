@@ -29,7 +29,9 @@ func main() {
 
 	// doServerStreaming(&c)
 
-	doClientStreaming(&c)
+	// doClientStreaming(&c)
+
+	doBidiStreaming(&c)
 }
 
 func doUnary(c *greetpb.GreetServiceClient) {
@@ -87,7 +89,7 @@ func doClientStreaming(c *greetpb.GreetServiceClient) {
 
 	stream, err := (*c).GreetLong(context.Background())
 	if err != nil {
-		log.Fatalf("Error invoking GreetLong()", err)
+		log.Fatalf("Error invoking GreetLong(): %v\n", err)
 	}
 
 	peeps := []*greetpb.GreetLongRequest{
@@ -143,4 +145,92 @@ func doClientStreaming(c *greetpb.GreetServiceClient) {
 
 	fmt.Printf("Response from GreetLong(): %v", res)
 
+}
+
+func doBidiStreaming(c *greetpb.GreetServiceClient) {
+	fmt.Println("BiDi streaming RPC call")
+
+	stream, err := (*c).GreetEveryone(context.Background())
+	if err != nil {
+		log.Fatalf("Error opening stream: %v\n", err)
+	}
+
+	peeps := []*greetpb.GreetEveryoneRequest{
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Hanut",
+				LastName:  "Singh Gusain",
+			},
+		},
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Aditya",
+				LastName:  "Guleria",
+			},
+		},
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Aniruddha",
+				LastName:  "Mishra",
+			},
+		},
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Rishabh",
+				LastName:  "Singh",
+			},
+		},
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Ishan",
+				LastName:  "Bisht",
+			},
+		},
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Shikhar",
+				LastName:  "Srivastava",
+			},
+		},
+	}
+
+	receiver := make(chan string)
+
+	// Send a bunch of messages
+	go func() {
+		for i, peep := range peeps {
+			fmt.Printf("Sending GreetEveryoneRequest for: %v\n", peep)
+			err := stream.Send(peep)
+			if err != nil {
+				log.Fatalf("Error sending message for (%v): %v\n", peep, err)
+			}
+			if i < len(peeps)-1 {
+				time.Sleep(time.Second)
+			}
+		}
+		stream.CloseSend()
+	}()
+
+	// Receive a bunch on messages
+	go func() {
+		for {
+			m, err := stream.Recv()
+			if err == io.EOF {
+				// Stream ended
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error reading from stream: %v", err)
+				break
+			}
+			// fmt.Println("Message from Service: " + m.GetResult())
+			receiver <- m.GetResult()
+		}
+	}()
+
+	for range peeps {
+		msg := <-receiver
+		fmt.Println(msg)
+	}
+	close(receiver)
 }

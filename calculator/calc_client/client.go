@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
-	"strconv"
+	"time"
 
 	"github.com/hanut/grpc-go-masterclass/calculator/calculatorpb"
 
@@ -14,18 +13,18 @@ import (
 )
 
 func main() {
-	args := os.Args
-	if len(args) < 2 {
-		args = append(args, "210")
-	}
+	// args := os.Args
+	// if len(args) < 2 {
+	// 	args = append(args, "210")
+	// }
 	fmt.Println("CalculatorService client started...")
-	n, err := strconv.Atoi(args[1])
+	// n, err := strconv.Atoi(args[1])
 
-	if err != nil {
-		log.Fatalf("Looks like the number you entered is invalid: %v", err)
-	}
+	// if err != nil {
+	// 	log.Fatalf("Looks like the number you entered is invalid: %v", err)
+	// }
 
-	fmt.Printf("RPC decompose for number: %v\n", n)
+	// fmt.Printf("RPC decompose for number: %v\n", n)
 
 	conn, err := grpc.Dial("0.0.0.0:50051", grpc.WithInsecure())
 
@@ -37,12 +36,23 @@ func main() {
 
 	c := calculatorpb.NewCalculatorServiceClient(conn)
 
+	// doDecomposePN(&c, &n)
+	nums := []uint32{245, 618, 718, 121}
+
+	doCalculateAvg(&c, &nums)
+}
+
+func doDecomposePN(c *calculatorpb.CalculatorServiceClient, n *int) {
 	req := &calculatorpb.PrimeNumberDecompositionRequest{
-		Number: uint32(n),
+		Number: uint32(*n),
 	}
 
 	tmp := make([]uint32, 0)
-	rStream, err := c.PrimeNumberDecomposition(context.Background(), req)
+	rStream, err := (*c).PrimeNumberDecomposition(context.Background(), req)
+
+	if err != nil {
+		log.Fatalf("Error invoking PrimeNumberDecomposition(): %v", err)
+	}
 
 	for {
 		res, err := rStream.Recv()
@@ -60,4 +70,27 @@ func main() {
 	}
 
 	fmt.Printf("Decomposed number is: %v\n", tmp)
+}
+
+func doCalculateAvg(c *calculatorpb.CalculatorServiceClient, nums *[]uint32) {
+	stream, err := (*c).ComputeAverage(context.Background())
+	if err != nil {
+		log.Fatalf("Error opening stream in doCalculateAvg(): %v", err)
+	}
+
+	for _, n := range *nums {
+		req := &calculatorpb.ComputeAverageRequest{
+			Number: n,
+		}
+		stream.Send(req)
+		time.Sleep(time.Millisecond * 500)
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Error closing stream: %v\n", err)
+	}
+	avg := res.GetResult()
+
+	fmt.Printf("Average (%v) = %v\n", *nums, avg)
 }

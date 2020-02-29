@@ -33,6 +33,14 @@ message GreetLongResponse {
     repeated string result = 1;
 }
 
+message GreetEveryoneRequest {
+    Greeting greeting = 1;
+}
+
+message GreetEveryoneResponse {
+    string result = 1;
+}
+
 service GreetService {
  
     // Unary API
@@ -43,4 +51,7 @@ service GreetService {
     
     // Client Streaming API
     rpc GreetLong(stream GreetLongRequest) returns (GreetLongResponse) {};
+
+    // Bi-di Streaming API
+    rpc GreetEveryone(stream GreetEveryoneRequest) returns (stream GreetEveryoneResponse) {};
 }
