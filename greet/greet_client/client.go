@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"github.com/hanut/grpc-go-masterclass/greet/greetpb"
 	"google.golang.org/grpc"
@@ -24,10 +25,11 @@ func main() {
 	c := greetpb.NewGreetServiceClient(cc)
 	// fmt.Printf("Connection: %f", c)
 
-	doUnary(&c)
+	// doUnary(&c)
 
-	doServerStreaming(&c)
+	// doServerStreaming(&c)
 
+	doClientStreaming(&c)
 }
 
 func doUnary(c *greetpb.GreetServiceClient) {
@@ -77,5 +79,68 @@ func doServerStreaming(c *greetpb.GreetServiceClient) {
 		}
 		fmt.Printf("Response from GreetManyTimes: %v\n", msg)
 	}
+
+}
+
+func doClientStreaming(c *greetpb.GreetServiceClient) {
+	fmt.Println("Client streaming RPC call...")
+
+	stream, err := (*c).GreetLong(context.Background())
+	if err != nil {
+		log.Fatalf("Error invoking GreetLong()", err)
+	}
+
+	peeps := []*greetpb.GreetLongRequest{
+		&greetpb.GreetLongRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Hanut",
+				LastName:  "Singh Gusain",
+			},
+		},
+		&greetpb.GreetLongRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Aditya",
+				LastName:  "Guleria",
+			},
+		},
+		&greetpb.GreetLongRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Aniruddha",
+				LastName:  "Mishra",
+			},
+		},
+		&greetpb.GreetLongRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Rishabh",
+				LastName:  "Singh",
+			},
+		},
+		&greetpb.GreetLongRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Ishan",
+				LastName:  "Bisht",
+			},
+		},
+		&greetpb.GreetLongRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Shikhar",
+				LastName:  "Srivastava",
+			},
+		},
+	}
+
+	for _, peep := range peeps {
+		tmp := peep.GetGreeting()
+		fmt.Printf("Sending message for %v\n", tmp)
+		stream.Send(peep)
+		time.Sleep(time.Second)
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Error closing stream: %v", err)
+	}
+
+	fmt.Printf("Response from GreetLong(): %v", res)
 
 }
