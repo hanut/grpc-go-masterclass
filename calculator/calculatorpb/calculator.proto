@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package calculator;
+option go_package="calculatorpb";
+
+message PrimeNumberDecompositionRequest {
+  uint32 number = 1;
+}
+
+message PrimeNumberDecompositionResponse {
+  uint32 response = 1;
+}
+
+service CalculatorService {
+
+  rpc PrimeNumberDecomposition(PrimeNumberDecompositionRequest) returns (stream PrimeNumberDecompositionResponse);
+
+}

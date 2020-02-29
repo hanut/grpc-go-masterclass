@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
+	"time"
 
 	"github.com/hanut/grpc-go-masterclass/greet/greetpb"
 
@@ -14,13 +16,33 @@ import (
 type server struct{}
 
 func (*server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb.GreetResponse, error) {
-	fmt.Printf("Greet function was invoked with %v", req)
+	fmt.Printf("Greet function was invoked with %v\n", req)
 	fname := req.GetGreeting().GetFirstName()
 	lname := req.GetGreeting().GetLastName()
 	res := greetpb.GreetResponse{
 		Result: "Hello " + fname + " " + lname,
 	}
 	return &res, nil
+}
+
+func (*server) GreetManyTimes(req *greetpb.GreetManyTimesRequest, stream greetpb.GreetService_GreetManyTimesServer) error {
+	fmt.Printf("GreetManyTimes function was invoked with %v\n", req)
+	fname := req.GetGreeting().GetFirstName()
+	lname := req.GetGreeting().GetLastName()
+	reps := req.GetReps()
+	for i := uint32(0); i < reps; i++ {
+		// Convert i to a string using strconv.FormatUint which takes a
+		// uint64 so we also need to explicitly typecast to uint64
+		iAsString := strconv.FormatUint(uint64(i), 10)
+
+		result := "Hello " + fname + " " + lname + " (" + iAsString + ")"
+		res := &greetpb.GreetManyTimesResponse{
+			Result: result,
+		}
+		stream.Send(res)
+		time.Sleep(300 * time.Millisecond)
+	}
+	return nil
 }
 
 func main() {
