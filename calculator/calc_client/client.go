@@ -36,10 +36,23 @@ func main() {
 
 	c := calculatorpb.NewCalculatorServiceClient(conn)
 
+	doSum(&c)
 	// doDecomposePN(&c, &n)
-	nums := []uint32{245, 618, 718, 121}
+	// doCalculateAvg(&c, &([]uint32{245, 618, 718, 121}))
 
-	doCalculateAvg(&c, &nums)
+}
+
+func doSum(c *calculatorpb.CalculatorServiceClient) {
+	req := &calculatorpb.SumRequest{
+		A: 3,
+		B: 10,
+	}
+
+	res, err := (*c).Sum(context.Background(), req)
+	if err != nil {
+		log.Fatalf("Error invoking Sum(): %v\n", err)
+	}
+	fmt.Printf("Result of Sum(): %v\n", res.GetResult())
 }
 
 func doDecomposePN(c *calculatorpb.CalculatorServiceClient, n *int) {

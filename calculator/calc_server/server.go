@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -12,6 +13,15 @@ import (
 )
 
 type server struct{}
+
+func (*server) Sum(ctx context.Context, req *calculatorpb.SumRequest) (*calculatorpb.SumResponse, error) {
+	a := req.GetA()
+	b := req.GetB()
+	res := calculatorpb.SumResponse{
+		Result: a + b,
+	}
+	return &res, nil
+}
 
 func (*server) PrimeNumberDecomposition(req *calculatorpb.PrimeNumberDecompositionRequest, stream calculatorpb.CalculatorService_PrimeNumberDecompositionServer) error {
 	fmt.Printf("PrimeNumberDecomposition() was invoked with \n%v\n", req)
