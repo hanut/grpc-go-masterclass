@@ -36,10 +36,10 @@ func main() {
 
 	c := calculatorpb.NewCalculatorServiceClient(conn)
 
-	doSum(&c)
+	// doSum(&c)
 	// doDecomposePN(&c, &n)
 	// doCalculateAvg(&c, &([]uint32{245, 618, 718, 121}))
-
+	doFindMaximum(&c, &[]int32{-100, -20, -30, -1, -99})
 }
 
 func doSum(c *calculatorpb.CalculatorServiceClient) {
@@ -106,4 +106,49 @@ func doCalculateAvg(c *calculatorpb.CalculatorServiceClient, nums *[]uint32) {
 	avg := res.GetResult()
 
 	fmt.Printf("Average (%v) = %v\n", *nums, avg)
+}
+
+func doFindMaximum(c *calculatorpb.CalculatorServiceClient, nums *[]int32) {
+	stream, err := (*c).FindMaximum(context.Background())
+	if err != nil {
+		log.Fatalf("Error invoking FindMaximum(): %v\n", err)
+	}
+
+	receiver := make(chan int32)
+
+	// Send numbers to the server
+	go func() {
+		for _, num := range *nums {
+			time.Sleep(time.Second)
+			fmt.Printf("Sending number: %v\n", num)
+			err := stream.Send(&calculatorpb.FindMaximumRequest{
+				Num: num,
+			})
+			if err != nil {
+				log.Fatalf("Error sending number (%v): %v\n", num, err)
+			}
+		}
+		stream.CloseSend()
+	}()
+
+	// Get responses from the server
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				// Stream has ended
+			}
+			if err != nil {
+				log.Fatalf("Error reading stream: %v\n", err)
+			}
+			max := res.GetMax()
+			receiver <- max
+		}
+	}()
+
+	for i := 0; i < len(*nums); i++ {
+		fmt.Printf("Current Max: %v\n", <-receiver)
+	}
+
+	close(receiver)
 }
