@@ -30,3 +30,12 @@ openssl x509 -passin pass:1111 -req -days 365 -in client.csr -CA ca.crt -CAkey c
 
 openssl rsa -passin pass:1111 -in client.key -out client.key
 ```
+
+The `-subj  "/C=IN/ST=Uttarakand/L=Dehradun/O=KSDAC LLP/OU=Engineering/CN=ksdacllp.com"` line in the script can be replaced with your own subject
+for the request. The keys here are - 
+1. `/C` - 2 character country code (IN here stands for INDIA)
+2. `/ST` - State
+3. `/L` - Locality
+4. `/O` - Organization name
+5. `/OU` - Organization Unit
+6. `/CN` - The FQCN or FQDN
